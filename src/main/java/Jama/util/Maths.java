@@ -1,10 +1,13 @@
 package Jama.util;
+import qual.Immutable;
 
+@Immutable
 public class Maths {
 
    /** sqrt(a^2 + b^2) without under/overflow. **/
 
    public static double hypot(double a, double b) {
+      @Immutable
       double r;
       if (Math.abs(a) > Math.abs(b)) {
          r = b/a;

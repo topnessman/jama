@@ -1,4 +1,8 @@
 package Jama;
+import qual.Immutable;
+import qual.Readonly;
+import qual.Mutable;
+import qual.ReceiverDependantMutable;
 import Jama.util.*;
 
    /** Singular Value Decomposition.
@@ -15,6 +19,7 @@ import Jama.util.*;
    rank can be computed from this decomposition.
    */
 
+@ReceiverDependantMutable
 public class SingularValueDecomposition implements java.io.Serializable {
 
 /* ------------------------
@@ -25,12 +30,12 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @serial internal storage of U.
    @serial internal storage of V.
    */
-   private double[][] U, V;
+   private double @Immutable[][] U, V;
 
    /** Array for internal storage of singular values.
    @serial internal storage of singular values.
    */
-   private double[] s;
+   private @Immutable double @ReceiverDependantMutable [] s;
 
    /** Row and column dimensions.
    @serial row dimension.
@@ -47,65 +52,74 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @param Arg    Rectangular matrix
    */
 
-   public SingularValueDecomposition (Matrix Arg) {
+   public @Mutable SingularValueDecomposition (@Readonly Matrix Arg) {
 
       // Derived from LINPACK code.
       // Initialize.
-      double[][] A = Arg.getArrayCopy();
+      @Immutable
+      double @Readonly [] @Mutable [] A = Arg.getArrayCopy();
       m = Arg.getRowDimension();
       n = Arg.getColumnDimension();
 
-      /* Apparently the failing cases are only a proper subset of (m<n), 
+      /* Apparently the failing cases are only a proper subset of (m<n),
 	 so let's not throw error.  Correct fix to come later?
       if (m<n) {
 	  throw new IllegalArgumentException("Jama SVD only works for m >= n"); }
       */
+      @Immutable
       int nu = Math.min(m,n);
-      s = new double [Math.min(m+1,n)];
-      U = new double [m][nu];
-      V = new double [n][n];
-      double[] e = new double [n];
-      double[] work = new double [m];
+      s = new double @Mutable [Math.min(m+1,n)];
+      U = new double @Immutable [m][nu];
+      V = new double @Immutable [n][n];
+      @Immutable
+      double @Mutable [] e = new double @Mutable [n];
+      @Immutable
+      double @Mutable [] work = new double @Mutable [m];
+      @Immutable
       boolean wantu = true;
+      @Immutable
       boolean wantv = true;
 
       // Reduce A to bidiagonal form, storing the diagonal elements
       // in s and the super-diagonal elements in e.
 
+      @Immutable
       int nct = Math.min(m-1,n);
+      @Immutable
       int nrt = Math.max(0,Math.min(n-2,m));
-      for (int k = 0; k < Math.max(nct,nrt); k++) {
+      for (@Immutable int k = 0; k < Math.max(nct,nrt); k++) {
          if (k < nct) {
 
             // Compute the transformation for the k-th column and
             // place the k-th diagonal in s[k].
             // Compute 2-norm of k-th column without under/overflow.
             s[k] = 0;
-            for (int i = k; i < m; i++) {
+            for (@Immutable int i = k; i < m; i++) {
                s[k] = Maths.hypot(s[k],A[i][k]);
             }
             if (s[k] != 0.0) {
                if (A[k][k] < 0.0) {
                   s[k] = -s[k];
                }
-               for (int i = k; i < m; i++) {
+               for (@Immutable int i = k; i < m; i++) {
                   A[i][k] /= s[k];
                }
                A[k][k] += 1.0;
             }
             s[k] = -s[k];
          }
-         for (int j = k+1; j < n; j++) {
+         for (@Immutable int j = k+1; j < n; j++) {
             if ((k < nct) & (s[k] != 0.0))  {
 
             // Apply the transformation.
 
+               @Immutable
                double t = 0;
-               for (int i = k; i < m; i++) {
+               for (@Immutable int i = k; i < m; i++) {
                   t += A[i][k]*A[i][j];
                }
                t = -t/A[k][k];
-               for (int i = k; i < m; i++) {
+               for (@Immutable int i = k; i < m; i++) {
                   A[i][j] += t*A[i][k];
                }
             }
@@ -120,7 +134,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
             // Place the transformation in U for subsequent back
             // multiplication.
 
-            for (int i = k; i < m; i++) {
+            for (@Immutable int i = k; i < m; i++) {
                U[i][k] = A[i][k];
             }
          }
@@ -130,14 +144,14 @@ public class SingularValueDecomposition implements java.io.Serializable {
             // k-th super-diagonal in e[k].
             // Compute 2-norm without under/overflow.
             e[k] = 0;
-            for (int i = k+1; i < n; i++) {
+            for (@Immutable int i = k+1; i < n; i++) {
                e[k] = Maths.hypot(e[k],e[i]);
             }
             if (e[k] != 0.0) {
                if (e[k+1] < 0.0) {
                   e[k] = -e[k];
                }
-               for (int i = k+1; i < n; i++) {
+               for (@Immutable int i = k+1; i < n; i++) {
                   e[i] /= e[k];
                }
                e[k+1] += 1.0;
@@ -147,17 +161,18 @@ public class SingularValueDecomposition implements java.io.Serializable {
 
             // Apply the transformation.
 
-               for (int i = k+1; i < m; i++) {
+               for (@Immutable int i = k+1; i < m; i++) {
                   work[i] = 0.0;
                }
-               for (int j = k+1; j < n; j++) {
-                  for (int i = k+1; i < m; i++) {
+               for (@Immutable int j = k+1; j < n; j++) {
+                  for (@Immutable int i = k+1; i < m; i++) {
                      work[i] += e[j]*A[i][j];
                   }
                }
-               for (int j = k+1; j < n; j++) {
+               for (@Immutable int j = k+1; j < n; j++) {
+                  @Immutable
                   double t = -e[j]/e[k+1];
-                  for (int i = k+1; i < m; i++) {
+                  for (@Immutable int i = k+1; i < m; i++) {
                      A[i][j] += t*work[i];
                   }
                }
@@ -167,7 +182,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
             // Place the transformation in V for subsequent
             // back multiplication.
 
-               for (int i = k+1; i < n; i++) {
+               for (@Immutable int i = k+1; i < n; i++) {
                   V[i][k] = e[i];
                }
             }
@@ -176,6 +191,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
 
       // Set up the final bidiagonal matrix or order p.
 
+      @Immutable
       int p = Math.min(n,m+1);
       if (nct < n) {
          s[nct] = A[nct][nct];
@@ -191,33 +207,34 @@ public class SingularValueDecomposition implements java.io.Serializable {
       // If required, generate U.
 
       if (wantu) {
-         for (int j = nct; j < nu; j++) {
-            for (int i = 0; i < m; i++) {
+         for (@Immutable int j = nct; j < nu; j++) {
+            for (@Immutable int i = 0; i < m; i++) {
                U[i][j] = 0.0;
             }
             U[j][j] = 1.0;
          }
-         for (int k = nct-1; k >= 0; k--) {
+         for (@Immutable int k = nct-1; k >= 0; k--) {
             if (s[k] != 0.0) {
-               for (int j = k+1; j < nu; j++) {
+               for (@Immutable int j = k+1; j < nu; j++) {
+                  @Immutable
                   double t = 0;
-                  for (int i = k; i < m; i++) {
+                  for (@Immutable int i = k; i < m; i++) {
                      t += U[i][k]*U[i][j];
                   }
                   t = -t/U[k][k];
-                  for (int i = k; i < m; i++) {
+                  for (@Immutable int i = k; i < m; i++) {
                      U[i][j] += t*U[i][k];
                   }
                }
-               for (int i = k; i < m; i++ ) {
+               for (@Immutable int i = k; i < m; i++ ) {
                   U[i][k] = -U[i][k];
                }
                U[k][k] = 1.0 + U[k][k];
-               for (int i = 0; i < k-1; i++) {
+               for (@Immutable int i = 0; i < k-1; i++) {
                   U[i][k] = 0.0;
                }
             } else {
-               for (int i = 0; i < m; i++) {
+               for (@Immutable int i = 0; i < m; i++) {
                   U[i][k] = 0.0;
                }
                U[k][k] = 1.0;
@@ -228,20 +245,21 @@ public class SingularValueDecomposition implements java.io.Serializable {
       // If required, generate V.
 
       if (wantv) {
-         for (int k = n-1; k >= 0; k--) {
+         for (@Immutable int k = n-1; k >= 0; k--) {
             if ((k < nrt) & (e[k] != 0.0)) {
-               for (int j = k+1; j < nu; j++) {
+               for (@Immutable int j = k+1; j < nu; j++) {
+                  @Immutable
                   double t = 0;
-                  for (int i = k+1; i < n; i++) {
+                  for (@Immutable int i = k+1; i < n; i++) {
                      t += V[i][k]*V[i][j];
                   }
                   t = -t/V[k+1][k];
-                  for (int i = k+1; i < n; i++) {
+                  for (@Immutable int i = k+1; i < n; i++) {
                      V[i][j] += t*V[i][k];
                   }
                }
             }
-            for (int i = 0; i < n; i++) {
+            for (@Immutable int i = 0; i < n; i++) {
                V[i][k] = 0.0;
             }
             V[k][k] = 1.0;
@@ -250,9 +268,13 @@ public class SingularValueDecomposition implements java.io.Serializable {
 
       // Main iteration loop for the singular values.
 
+      @Immutable
       int pp = p-1;
+      @Immutable
       int iter = 0;
+      @Immutable
       double eps = Math.pow(2.0,-52.0);
+      @Immutable
       double tiny = Math.pow(2.0,-966.0);
       while (p > 0) {
          int k,kase;
@@ -282,12 +304,14 @@ public class SingularValueDecomposition implements java.io.Serializable {
          if (k == p-2) {
             kase = 4;
          } else {
+            @Immutable
             int ks;
             for (ks = p-1; ks >= k; ks--) {
                if (ks == k) {
                   break;
                }
-               double t = (ks != p ? Math.abs(e[ks]) : 0.) + 
+               @Immutable
+               double t = (ks != p ? Math.abs(e[ks]) : 0.) +
                           (ks != k+1 ? Math.abs(e[ks-1]) : 0.);
                if (Math.abs(s[ks]) <= tiny + eps*t)  {
                   s[ks] = 0.0;
@@ -312,11 +336,15 @@ public class SingularValueDecomposition implements java.io.Serializable {
             // Deflate negligible s(p).
 
             case 1: {
+               @Immutable
                double f = e[p-2];
                e[p-2] = 0.0;
-               for (int j = p-2; j >= k; j--) {
+               for (@Immutable int j = p-2; j >= k; j--) {
+                  @Immutable
                   double t = Maths.hypot(s[j],f);
+                  @Immutable
                   double cs = s[j]/t;
+                  @Immutable
                   double sn = f/t;
                   s[j] = t;
                   if (j != k) {
@@ -324,7 +352,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
                      e[j-1] = cs*e[j-1];
                   }
                   if (wantv) {
-                     for (int i = 0; i < n; i++) {
+                     for (@Immutable int i = 0; i < n; i++) {
                         t = cs*V[i][j] + sn*V[i][p-1];
                         V[i][p-1] = -sn*V[i][j] + cs*V[i][p-1];
                         V[i][j] = t;
@@ -337,17 +365,21 @@ public class SingularValueDecomposition implements java.io.Serializable {
             // Split at negligible s(k).
 
             case 2: {
+               @Immutable
                double f = e[k-1];
                e[k-1] = 0.0;
-               for (int j = k; j < p; j++) {
+               for (@Immutable int j = k; j < p; j++) {
+                  @Immutable
                   double t = Maths.hypot(s[j],f);
+                  @Immutable
                   double cs = s[j]/t;
+                  @Immutable
                   double sn = f/t;
                   s[j] = t;
                   f = -sn*e[j];
                   e[j] = cs*e[j];
                   if (wantu) {
-                     for (int i = 0; i < m; i++) {
+                     for (@Immutable int i = 0; i < m; i++) {
                         t = cs*U[i][j] + sn*U[i][k-1];
                         U[i][k-1] = -sn*U[i][j] + cs*U[i][k-1];
                         U[i][j] = t;
@@ -362,17 +394,26 @@ public class SingularValueDecomposition implements java.io.Serializable {
             case 3: {
 
                // Calculate the shift.
-   
+
+               @Immutable
                double scale = Math.max(Math.max(Math.max(Math.max(
-                       Math.abs(s[p-1]),Math.abs(s[p-2])),Math.abs(e[p-2])), 
+                       Math.abs(s[p-1]),Math.abs(s[p-2])),Math.abs(e[p-2])),
                        Math.abs(s[k])),Math.abs(e[k]));
+               @Immutable
                double sp = s[p-1]/scale;
+               @Immutable
                double spm1 = s[p-2]/scale;
+               @Immutable
                double epm1 = e[p-2]/scale;
+               @Immutable
                double sk = s[k]/scale;
+               @Immutable
                double ek = e[k]/scale;
+               @Immutable
                double b = ((spm1 + sp)*(spm1 - sp) + epm1*epm1)/2.0;
+               @Immutable
                double c = (sp*epm1)*(sp*epm1);
+               @Immutable
                double shift = 0.0;
                if ((b != 0.0) | (c != 0.0)) {
                   shift = Math.sqrt(b*b + c);
@@ -381,14 +422,19 @@ public class SingularValueDecomposition implements java.io.Serializable {
                   }
                   shift = c/(b + shift);
                }
+               @Immutable
                double f = (sk + sp)*(sk - sp) + shift;
+               @Immutable
                double g = sk*ek;
-   
+
                // Chase zeros.
-   
-               for (int j = k; j < p-1; j++) {
+
+               for (@Immutable int j = k; j < p-1; j++) {
+                  @Immutable
                   double t = Maths.hypot(f,g);
+                  @Immutable
                   double cs = f/t;
+                  @Immutable
                   double sn = g/t;
                   if (j != k) {
                      e[j-1] = t;
@@ -398,7 +444,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
                   g = sn*s[j+1];
                   s[j+1] = cs*s[j+1];
                   if (wantv) {
-                     for (int i = 0; i < n; i++) {
+                     for (@Immutable int i = 0; i < n; i++) {
                         t = cs*V[i][j] + sn*V[i][j+1];
                         V[i][j+1] = -sn*V[i][j] + cs*V[i][j+1];
                         V[i][j] = t;
@@ -413,7 +459,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
                   g = sn*e[j+1];
                   e[j+1] = cs*e[j+1];
                   if (wantu && (j < m-1)) {
-                     for (int i = 0; i < m; i++) {
+                     for (@Immutable int i = 0; i < m; i++) {
                         t = cs*U[i][j] + sn*U[i][j+1];
                         U[i][j+1] = -sn*U[i][j] + cs*U[i][j+1];
                         U[i][j] = t;
@@ -430,32 +476,33 @@ public class SingularValueDecomposition implements java.io.Serializable {
             case 4: {
 
                // Make the singular values positive.
-   
+
                if (s[k] <= 0.0) {
                   s[k] = (s[k] < 0.0 ? -s[k] : 0.0);
                   if (wantv) {
-                     for (int i = 0; i <= pp; i++) {
+                     for (@Immutable int i = 0; i <= pp; i++) {
                         V[i][k] = -V[i][k];
                      }
                   }
                }
-   
+
                // Order the singular values.
-   
+
                while (k < pp) {
                   if (s[k] >= s[k+1]) {
                      break;
                   }
+                  @Immutable
                   double t = s[k];
                   s[k] = s[k+1];
                   s[k+1] = t;
                   if (wantv && (k < n-1)) {
-                     for (int i = 0; i < n; i++) {
+                     for (@Immutable int i = 0; i < n; i++) {
                         t = V[i][k+1]; V[i][k+1] = V[i][k]; V[i][k] = t;
                      }
                   }
                   if (wantu && (k < m-1)) {
-                     for (int i = 0; i < m; i++) {
+                     for (@Immutable int i = 0; i < m; i++) {
                         t = U[i][k+1]; U[i][k+1] = U[i][k]; U[i][k] = t;
                      }
                   }
@@ -477,23 +524,23 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @return     U
    */
 
-   public Matrix getU () {
-      return new Matrix(U,m,Math.min(m+1,n));
+   public @Immutable Matrix getU (@Mutable SingularValueDecomposition this) {
+      return new @Immutable Matrix(U,m,Math.min(m+1,n));
    }
 
    /** Return the right singular vectors
    @return     V
    */
 
-   public Matrix getV () {
-      return new Matrix(V,n,n);
+   public @Immutable Matrix getV (@Mutable SingularValueDecomposition this) {
+      return new @Immutable Matrix(V,n,n);
    }
 
    /** Return the one-dimensional array of singular values
    @return     diagonal of S.
    */
 
-   public double[] getSingularValues () {
+   public @Immutable double @Readonly [] getSingularValues (@Readonly SingularValueDecomposition this) {
       return s;
    }
 
@@ -501,11 +548,13 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @return     S
    */
 
-   public Matrix getS () {
-      Matrix X = new Matrix(n,n);
-      double[][] S = X.getArray();
-      for (int i = 0; i < n; i++) {
-         for (int j = 0; j < n; j++) {
+   public @Immutable Matrix getS (@Readonly SingularValueDecomposition this) {
+      @Immutable
+      Matrix X = new @Immutable Matrix(n,n);
+      @Immutable
+      double @Readonly [] @Mutable [] S = X.getArray();
+      for (@Immutable int i = 0; i < n; i++) {
+         for (@Immutable int j = 0; j < n; j++) {
             S[i][j] = 0.0;
          }
          S[i][i] = this.s[i];
@@ -517,7 +566,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @return     max(S)
    */
 
-   public double norm2 () {
+   public double norm2 (@Readonly SingularValueDecomposition this) {
       return s[0];
    }
 
@@ -525,7 +574,7 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @return     max(S)/min(S)
    */
 
-   public double cond () {
+   public double cond (@Readonly SingularValueDecomposition this) {
       return s[0]/s[Math.min(m,n)-1];
    }
 
@@ -533,16 +582,19 @@ public class SingularValueDecomposition implements java.io.Serializable {
    @return     Number of nonnegligible singular values.
    */
 
-   public int rank () {
+   public int rank (@Readonly SingularValueDecomposition this) {
+      @Immutable
       double eps = Math.pow(2.0,-52.0);
+      @Immutable
       double tol = Math.max(m,n)*s[0]*eps;
+      @Immutable
       int r = 0;
-      for (int i = 0; i < s.length; i++) {
+      for (@Immutable int i = 0; i < s.length; i++) {
          if (s[i] > tol) {
             r++;
          }
       }
       return r;
    }
-  private static final long serialVersionUID = 1;
+  private static final @Immutable long serialVersionUID = 1;
 }

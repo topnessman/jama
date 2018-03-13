@@ -1,4 +1,8 @@
 package Jama;
+import qual.Immutable;
+import qual.Mutable;
+import qual.Readonly;
+import qual.ReceiverDependantMutable;
 import Jama.util.*;
 
 /** QR Decomposition.
@@ -14,6 +18,7 @@ import Jama.util.*;
    returns false.
 */
 
+@ReceiverDependantMutable
 public class QRDecomposition implements java.io.Serializable {
 
 /* ------------------------
@@ -23,7 +28,7 @@ public class QRDecomposition implements java.io.Serializable {
    /** Array for internal storage of decomposition.
    @serial internal array storage.
    */
-   private double[][] QR;
+   private @Immutable double @ReceiverDependantMutable [] @Mutable [] QR;
 
    /** Row and column dimensions.
    @serial column dimension.
@@ -34,7 +39,7 @@ public class QRDecomposition implements java.io.Serializable {
    /** Array for internal storage of diagonal of R.
    @serial diagonal of R.
    */
-   private double[] Rdiag;
+   private @Immutable double @Mutable [] Rdiag;
 
 /* ------------------------
    Constructor
@@ -45,18 +50,19 @@ public class QRDecomposition implements java.io.Serializable {
    @param A    Rectangular matrix
    */
 
-   public QRDecomposition (Matrix A) {
+   public @ReceiverDependantMutable QRDecomposition (@ReceiverDependantMutable Matrix A) {
       // Initialize.
       QR = A.getArrayCopy();
       m = A.getRowDimension();
       n = A.getColumnDimension();
-      Rdiag = new double[n];
+      Rdiag = new double @Mutable [n];
 
       // Main loop.
-      for (int k = 0; k < n; k++) {
+      for (@Immutable int k = 0; k < n; k++) {
          // Compute 2-norm of k-th column without under/overflow.
+         @Immutable
          double nrm = 0;
-         for (int i = k; i < m; i++) {
+         for (@Immutable int i = k; i < m; i++) {
             nrm = Maths.hypot(nrm,QR[i][k]);
          }
 
@@ -65,19 +71,20 @@ public class QRDecomposition implements java.io.Serializable {
             if (QR[k][k] < 0) {
                nrm = -nrm;
             }
-            for (int i = k; i < m; i++) {
+            for (@Immutable int i = k; i < m; i++) {
                QR[i][k] /= nrm;
             }
             QR[k][k] += 1.0;
 
             // Apply transformation to remaining columns.
-            for (int j = k+1; j < n; j++) {
-               double s = 0.0; 
-               for (int i = k; i < m; i++) {
+            for (@Immutable int j = k+1; j < n; j++) {
+               @Immutable
+               double s = 0.0;
+               for (@Immutable int i = k; i < m; i++) {
                   s += QR[i][k]*QR[i][j];
                }
                s = -s/QR[k][k];
-               for (int i = k; i < m; i++) {
+               for (@Immutable int i = k; i < m; i++) {
                   QR[i][j] += s*QR[i][k];
                }
             }
@@ -94,8 +101,8 @@ public class QRDecomposition implements java.io.Serializable {
    @return     true if R, and hence A, has full rank.
    */
 
-   public boolean isFullRank () {
-      for (int j = 0; j < n; j++) {
+   public @Immutable boolean isFullRank (@Readonly QRDecomposition this) {
+      for (@Immutable int j = 0; j < n; j++) {
          if (Rdiag[j] == 0)
             return false;
       }
@@ -106,11 +113,13 @@ public class QRDecomposition implements java.io.Serializable {
    @return     Lower trapezoidal matrix whose columns define the reflections
    */
 
-   public Matrix getH () {
-      Matrix X = new Matrix(m,n);
-      double[][] H = X.getArray();
-      for (int i = 0; i < m; i++) {
-         for (int j = 0; j < n; j++) {
+   public @Immutable Matrix getH (@Readonly QRDecomposition this) {
+      @Immutable
+      Matrix X = new @Immutable Matrix(m,n);
+      @Immutable
+      double @Readonly [] @Mutable [] H = X.getArray();
+      for (@Immutable int i = 0; i < m; i++) {
+         for (@Immutable int j = 0; j < n; j++) {
             if (i >= j) {
                H[i][j] = QR[i][j];
             } else {
@@ -125,11 +134,13 @@ public class QRDecomposition implements java.io.Serializable {
    @return     R
    */
 
-   public Matrix getR () {
-      Matrix X = new Matrix(n,n);
-      double[][] R = X.getArray();
-      for (int i = 0; i < n; i++) {
-         for (int j = 0; j < n; j++) {
+   public @Immutable Matrix getR (@Readonly QRDecomposition this) {
+      @Immutable
+      Matrix X = new @Immutable Matrix(n,n);
+      @Immutable
+      double @Readonly [] @Mutable [] R = X.getArray();
+      for (@Immutable int i = 0; i < n; i++) {
+         for (@Immutable int j = 0; j < n; j++) {
             if (i < j) {
                R[i][j] = QR[i][j];
             } else if (i == j) {
@@ -146,22 +157,25 @@ public class QRDecomposition implements java.io.Serializable {
    @return     Q
    */
 
-   public Matrix getQ () {
-      Matrix X = new Matrix(m,n);
-      double[][] Q = X.getArray();
-      for (int k = n-1; k >= 0; k--) {
-         for (int i = 0; i < m; i++) {
+   public @Immutable Matrix getQ (@Readonly QRDecomposition this) {
+      @Immutable
+      Matrix X = new @Immutable Matrix(m,n);
+      @Immutable
+      double @Readonly [] @Mutable [] Q = X.getArray();
+      for (@Immutable int k = n-1; k >= 0; k--) {
+         for (@Immutable int i = 0; i < m; i++) {
             Q[i][k] = 0.0;
          }
          Q[k][k] = 1.0;
-         for (int j = k; j < n; j++) {
+         for (@Immutable int j = k; j < n; j++) {
             if (QR[k][k] != 0) {
+               @Immutable
                double s = 0.0;
-               for (int i = k; i < m; i++) {
+               for (@Immutable int i = k; i < m; i++) {
                   s += QR[i][k]*Q[i][j];
                }
                s = -s/QR[k][k];
-               for (int i = k; i < m; i++) {
+               for (@Immutable int i = k; i < m; i++) {
                   Q[i][j] += s*QR[i][k];
                }
             }
@@ -177,43 +191,46 @@ public class QRDecomposition implements java.io.Serializable {
    @exception  RuntimeException  Matrix is rank deficient.
    */
 
-   public Matrix solve (Matrix B) {
+   public @Immutable Matrix solve (@Readonly QRDecomposition this, @Readonly Matrix B) {
       if (B.getRowDimension() != m) {
-         throw new IllegalArgumentException("Matrix row dimensions must agree.");
+         throw new @Mutable IllegalArgumentException("Matrix row dimensions must agree.");
       }
       if (!this.isFullRank()) {
-         throw new RuntimeException("Matrix is rank deficient.");
+         throw new @Immutable RuntimeException("Matrix is rank deficient.");
       }
-      
+
       // Copy right hand side
+      @Immutable
       int nx = B.getColumnDimension();
-      double[][] X = B.getArrayCopy();
+      @Immutable
+      double @Readonly [] @Mutable [] X = B.getArrayCopy();
 
       // Compute Y = transpose(Q)*B
-      for (int k = 0; k < n; k++) {
-         for (int j = 0; j < nx; j++) {
-            double s = 0.0; 
-            for (int i = k; i < m; i++) {
+      for (@Immutable int k = 0; k < n; k++) {
+         for (@Immutable int j = 0; j < nx; j++) {
+            @Immutable
+            double s = 0.0;
+            for (@Immutable int i = k; i < m; i++) {
                s += QR[i][k]*X[i][j];
             }
             s = -s/QR[k][k];
-            for (int i = k; i < m; i++) {
+            for (@Immutable int i = k; i < m; i++) {
                X[i][j] += s*QR[i][k];
             }
          }
       }
       // Solve R*X = Y;
-      for (int k = n-1; k >= 0; k--) {
-         for (int j = 0; j < nx; j++) {
+      for (@Immutable int k = n-1; k >= 0; k--) {
+         for (@Immutable int j = 0; j < nx; j++) {
             X[k][j] /= Rdiag[k];
          }
-         for (int i = 0; i < k; i++) {
-            for (int j = 0; j < nx; j++) {
+         for (@Immutable int i = 0; i < k; i++) {
+            for (@Immutable int j = 0; j < nx; j++) {
                X[i][j] -= X[k][j]*QR[i][k];
             }
          }
       }
-      return (new Matrix(X,n,nx).getMatrix(0,n-1,0,nx-1));
+      return (new @Immutable Matrix(X,n,nx).getMatrix(0,n-1,0,nx-1));
    }
-  private static final long serialVersionUID = 1;
+  private static final @Immutable long serialVersionUID = 1;
 }

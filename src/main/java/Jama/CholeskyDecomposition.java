@@ -1,4 +1,8 @@
 package Jama;
+import qual.Immutable;
+import qual.Mutable;
+import qual.Readonly;
+import qual.ReceiverDependantMutable;
 
    /** Cholesky Decomposition.
    <P>
@@ -10,6 +14,7 @@ package Jama;
    be queried by the isSPD() method.
    */
 
+@ReceiverDependantMutable
 public class CholeskyDecomposition implements java.io.Serializable {
 
 /* ------------------------
@@ -19,17 +24,17 @@ public class CholeskyDecomposition implements java.io.Serializable {
    /** Array for internal storage of decomposition.
    @serial internal array storage.
    */
-   private double[][] L;
+   private @Immutable double @ReceiverDependantMutable [] @ReceiverDependantMutable [] L;
 
    /** Row and column dimension (square matrix).
    @serial matrix dimension.
    */
-   private int n;
+   private @Immutable int n;
 
    /** Symmetric and positive definite flag.
    @serial is symmetric and positive definite flag.
    */
-   private boolean isspd;
+   private @Immutable boolean isspd;
 
 /* ------------------------
    Constructor
@@ -40,32 +45,37 @@ public class CholeskyDecomposition implements java.io.Serializable {
    @param  Arg   Square, symmetric matrix.
    */
 
-   public CholeskyDecomposition (Matrix Arg) {
+   public @Mutable CholeskyDecomposition (@Readonly Matrix Arg) {
 
 
      // Initialize.
-      double[][] A = Arg.getArray();
+      @Immutable
+      double @Readonly [] @Mutable [] A = Arg.getArray();
       n = Arg.getRowDimension();
-      L = new double[n][n];
+      L = new double @Mutable [n][n];
       isspd = (Arg.getColumnDimension() == n);
       // Main loop.
-      for (int j = 0; j < n; j++) {
-         double[] Lrowj = L[j];
+      for (@Immutable int j = 0; j < n; j++) {
+         @Immutable
+         double @Mutable [] Lrowj = L[j];
+         @Immutable
          double d = 0.0;
-         for (int k = 0; k < j; k++) {
-            double[] Lrowk = L[k];
+         for (@Immutable int k = 0; k < j; k++) {
+            @Immutable
+            double @Mutable [] Lrowk = L[k];
+            @Immutable
             double s = 0.0;
-            for (int i = 0; i < k; i++) {
+            for (@Immutable int i = 0; i < k; i++) {
                s += Lrowk[i]*Lrowj[i];
             }
             Lrowj[k] = s = (A[j][k] - s)/L[k][k];
             d = d + s*s;
-            isspd = isspd & (A[k][j] == A[j][k]); 
+            isspd = isspd & (A[k][j] == A[j][k]);
          }
          d = A[j][j] - d;
          isspd = isspd & (d > 0.0);
          L[j][j] = Math.sqrt(Math.max(d,0.0));
-         for (int k = j+1; k < n; k++) {
+         for (@Immutable int k = j+1; k < n; k++) {
             L[j][k] = 0.0;
          }
       }
@@ -110,7 +120,7 @@ public class CholeskyDecomposition implements java.io.Serializable {
             }
             R[k][j] = s = s/R[k][k];
             d = d + s*s;
-            isspd = isspd & (A[k][j] == A[j][k]); 
+            isspd = isspd & (A[k][j] == A[j][k]);
          }
          d = A[j][j] - d;
          isspd = isspd & (d > 0.0);
@@ -141,7 +151,7 @@ public class CholeskyDecomposition implements java.io.Serializable {
    @return     true if A is symmetric and positive definite.
    */
 
-   public boolean isSPD () {
+   public @Immutable boolean isSPD (@Readonly CholeskyDecomposition this) {
       return isspd;
    }
 
@@ -149,8 +159,8 @@ public class CholeskyDecomposition implements java.io.Serializable {
    @return     L
    */
 
-   public Matrix getL () {
-      return new Matrix(L,n,n);
+   public @Immutable Matrix getL (@Mutable CholeskyDecomposition this) {
+      return new @Immutable Matrix(L,n,n);
    }
 
    /** Solve A*X = B
@@ -160,42 +170,44 @@ public class CholeskyDecomposition implements java.io.Serializable {
    @exception  RuntimeException  Matrix is not symmetric positive definite.
    */
 
-   public Matrix solve (Matrix B) {
+   public @Immutable Matrix solve (@Readonly CholeskyDecomposition this, @Readonly Matrix B) {
       if (B.getRowDimension() != n) {
-         throw new IllegalArgumentException("Matrix row dimensions must agree.");
+         throw new @Mutable IllegalArgumentException("Matrix row dimensions must agree.");
       }
       if (!isspd) {
-         throw new RuntimeException("Matrix is not symmetric positive definite.");
+         throw new @Immutable RuntimeException("Matrix is not symmetric positive definite.");
       }
 
       // Copy right hand side.
-      double[][] X = B.getArrayCopy();
+      @Immutable
+      double @Readonly [] @Mutable [] X = B.getArrayCopy();
+      @Immutable
       int nx = B.getColumnDimension();
 
 	      // Solve L*Y = B;
-	      for (int k = 0; k < n; k++) {
-	        for (int j = 0; j < nx; j++) {
-	           for (int i = 0; i < k ; i++) {
+	      for (@Immutable int k = 0; k < n; k++) {
+	        for (@Immutable int j = 0; j < nx; j++) {
+	           for (@Immutable int i = 0; i < k ; i++) {
 	               X[k][j] -= X[i][j]*L[k][i];
 	           }
 	           X[k][j] /= L[k][k];
 	        }
 	      }
-	
+
 	      // Solve L'*X = Y;
-	      for (int k = n-1; k >= 0; k--) {
-	        for (int j = 0; j < nx; j++) {
-	           for (int i = k+1; i < n ; i++) {
+	      for (@Immutable int k = n-1; k >= 0; k--) {
+	        for (@Immutable int j = 0; j < nx; j++) {
+	           for (@Immutable int i = k+1; i < n ; i++) {
 	               X[k][j] -= X[i][j]*L[i][k];
 	           }
 	           X[k][j] /= L[k][k];
 	        }
 	      }
-      
-      
-      return new Matrix(X,n,nx);
+
+
+      return new @Immutable Matrix(X,n,nx);
    }
-  private static final long serialVersionUID = 1;
+  private static final @Immutable long serialVersionUID = 1;
 
 }
 

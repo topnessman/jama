@@ -1,4 +1,8 @@
 package Jama;
+import qual.Immutable;
+import qual.Mutable;
+import qual.Readonly;
+import qual.ReceiverDependantMutable;
 
    /** LU Decomposition.
    <P>
@@ -13,6 +17,7 @@ package Jama;
    linear equations.  This will fail if isNonsingular() returns false.
    */
 
+@ReceiverDependantMutable
 public class LUDecomposition implements java.io.Serializable {
 
 /* ------------------------
@@ -22,7 +27,7 @@ public class LUDecomposition implements java.io.Serializable {
    /** Array for internal storage of decomposition.
    @serial internal array storage.
    */
-   private double[][] LU;
+   private @Immutable double @Immutable [] @ReceiverDependantMutable [] LU;
 
    /** Row and column dimensions, and pivot sign.
    @serial column dimension.
@@ -34,7 +39,7 @@ public class LUDecomposition implements java.io.Serializable {
    /** Internal storage of pivot vector.
    @serial pivot vector.
    */
-   private int[] piv;
+   private @Immutable int @ReceiverDependantMutable [] piv;
 
 /* ------------------------
    Constructor
@@ -45,41 +50,45 @@ public class LUDecomposition implements java.io.Serializable {
    @param  A Rectangular matrix
    */
 
-   public LUDecomposition (Matrix A) {
+   public @Mutable LUDecomposition (@Immutable Matrix A) {
 
    // Use a "left-looking", dot-product, Crout/Doolittle algorithm.
 
       LU = A.getArrayCopy();
       m = A.getRowDimension();
       n = A.getColumnDimension();
-      piv = new int[m];
-      for (int i = 0; i < m; i++) {
+      piv = new int @Mutable [m];
+      for (@Immutable int i = 0; i < m; i++) {
          piv[i] = i;
       }
       pivsign = 1;
-      double[] LUrowi;
-      double[] LUcolj = new double[m];
+      @Immutable
+      double @Mutable [] LUrowi;
+      @Immutable
+      double @Mutable [] LUcolj = new double @Mutable [m];
 
       // Outer loop.
 
-      for (int j = 0; j < n; j++) {
+      for (@Immutable int j = 0; j < n; j++) {
 
          // Make a copy of the j-th column to localize references.
 
-         for (int i = 0; i < m; i++) {
+         for (@Immutable int i = 0; i < m; i++) {
             LUcolj[i] = LU[i][j];
          }
 
          // Apply previous transformations.
 
-         for (int i = 0; i < m; i++) {
+         for (@Immutable int i = 0; i < m; i++) {
             LUrowi = LU[i];
 
             // Most of the time is spent in the following dot product.
 
+            @Immutable
             int kmax = Math.min(i,j);
+            @Immutable
             double s = 0.0;
-            for (int k = 0; k < kmax; k++) {
+            for (@Immutable int k = 0; k < kmax; k++) {
                s += LUrowi[k]*LUcolj[k];
             }
 
@@ -88,16 +97,19 @@ public class LUDecomposition implements java.io.Serializable {
    
          // Find pivot and exchange if necessary.
 
+         @Immutable
          int p = j;
-         for (int i = j+1; i < m; i++) {
+         for (@Immutable int i = j+1; i < m; i++) {
             if (Math.abs(LUcolj[i]) > Math.abs(LUcolj[p])) {
                p = i;
             }
          }
          if (p != j) {
-            for (int k = 0; k < n; k++) {
+            for (@Immutable int k = 0; k < n; k++) {
+               @Immutable
                double t = LU[p][k]; LU[p][k] = LU[j][k]; LU[j][k] = t;
             }
+            @Immutable
             int k = piv[p]; piv[p] = piv[j]; piv[j] = k;
             pivsign = -pivsign;
          }
@@ -105,7 +117,7 @@ public class LUDecomposition implements java.io.Serializable {
          // Compute multipliers.
          
          if (j < m & LU[j][j] != 0.0) {
-            for (int i = j+1; i < m; i++) {
+            for (@Immutable int i = j+1; i < m; i++) {
                LU[i][j] /= LU[j][j];
             }
          }
@@ -179,8 +191,8 @@ public class LUDecomposition implements java.io.Serializable {
    @return     true if U, and hence A, is nonsingular.
    */
 
-   public boolean isNonsingular () {
-      for (int j = 0; j < n; j++) {
+   public @Immutable boolean isNonsingular (@Readonly LUDecomposition this) {
+      for (@Immutable int j = 0; j < n; j++) {
          if (LU[j][j] == 0)
             return false;
       }
@@ -191,11 +203,13 @@ public class LUDecomposition implements java.io.Serializable {
    @return     L
    */
 
-   public Matrix getL () {
-      Matrix X = new Matrix(m,n);
-      double[][] L = X.getArray();
-      for (int i = 0; i < m; i++) {
-         for (int j = 0; j < n; j++) {
+   public @Mutable Matrix getL (@Readonly LUDecomposition this) {
+      @Mutable
+      Matrix X = new @Mutable Matrix(m,n);
+      @Immutable
+      double @Readonly [] @Mutable [] L = X.getArray();
+      for (@Immutable int i = 0; i < m; i++) {
+         for (@Immutable int j = 0; j < n; j++) {
             if (i > j) {
                L[i][j] = LU[i][j];
             } else if (i == j) {
@@ -212,11 +226,13 @@ public class LUDecomposition implements java.io.Serializable {
    @return     U
    */
 
-   public Matrix getU () {
-      Matrix X = new Matrix(n,n);
-      double[][] U = X.getArray();
-      for (int i = 0; i < n; i++) {
-         for (int j = 0; j < n; j++) {
+   public @Readonly Matrix getU (@Readonly LUDecomposition this) {
+      @ReceiverDependantMutable
+      Matrix X = new @ReceiverDependantMutable Matrix(n,n);
+      @Immutable
+      double @Readonly [] @Mutable [] U = X.getArray();
+      for (@Immutable int i = 0; i < n; i++) {
+         for (@Immutable int j = 0; j < n; j++) {
             if (i <= j) {
                U[i][j] = LU[i][j];
             } else {
@@ -231,9 +247,10 @@ public class LUDecomposition implements java.io.Serializable {
    @return     piv
    */
 
-   public int[] getPivot () {
-      int[] p = new int[m];
-      for (int i = 0; i < m; i++) {
+   public @Immutable int @Readonly [] getPivot (@Readonly LUDecomposition this) {
+      @Immutable
+      int @Mutable [] p = new int @Mutable [m];
+      for (@Immutable int i = 0; i < m; i++) {
          p[i] = piv[i];
       }
       return p;
@@ -243,9 +260,10 @@ public class LUDecomposition implements java.io.Serializable {
    @return     (double) piv
    */
 
-   public double[] getDoublePivot () {
-      double[] vals = new double[m];
-      for (int i = 0; i < m; i++) {
+   public @Immutable double @Readonly [] getDoublePivot (@Readonly LUDecomposition this) {
+      @Immutable
+      double @Mutable [] vals = new double @Mutable [m];
+      for (@Immutable int i = 0; i < m; i++) {
          vals[i] = (double) piv[i];
       }
       return vals;
@@ -256,12 +274,13 @@ public class LUDecomposition implements java.io.Serializable {
    @exception  IllegalArgumentException  Matrix must be square
    */
 
-   public double det () {
+   public @Immutable double det (@Readonly LUDecomposition this) {
       if (m != n) {
-         throw new IllegalArgumentException("Matrix must be square.");
+         throw new @Mutable IllegalArgumentException("Matrix must be square.");
       }
+      @Immutable
       double d = (double) pivsign;
-      for (int j = 0; j < n; j++) {
+      for (@Immutable int j = 0; j < n; j++) {
          d *= LU[j][j];
       }
       return d;
@@ -274,39 +293,42 @@ public class LUDecomposition implements java.io.Serializable {
    @exception  RuntimeException  Matrix is singular.
    */
 
-   public Matrix solve (Matrix B) {
+   public @Immutable Matrix solve (@Readonly LUDecomposition this, @Readonly Matrix B) {
       if (B.getRowDimension() != m) {
-         throw new IllegalArgumentException("Matrix row dimensions must agree.");
+         throw new @Mutable IllegalArgumentException("Matrix row dimensions must agree.");
       }
       if (!this.isNonsingular()) {
-         throw new RuntimeException("Matrix is singular.");
+         throw new @ReceiverDependantMutable RuntimeException("Matrix is singular.");
       }
 
       // Copy right hand side with pivoting
+      @Immutable
       int nx = B.getColumnDimension();
+      @Immutable
       Matrix Xmat = B.getMatrix(piv,0,nx-1);
-      double[][] X = Xmat.getArray();
+      @Immutable
+      double @Readonly [] @Mutable [] X = Xmat.getArray();
 
       // Solve L*Y = B(piv,:)
-      for (int k = 0; k < n; k++) {
-         for (int i = k+1; i < n; i++) {
-            for (int j = 0; j < nx; j++) {
+      for (@Immutable int k = 0; k < n; k++) {
+         for (@Immutable int i = k+1; i < n; i++) {
+            for (@Immutable int j = 0; j < nx; j++) {
                X[i][j] -= X[k][j]*LU[i][k];
             }
          }
       }
       // Solve U*X = Y;
-      for (int k = n-1; k >= 0; k--) {
-         for (int j = 0; j < nx; j++) {
+      for (@Immutable int k = n-1; k >= 0; k--) {
+         for (@Immutable int j = 0; j < nx; j++) {
             X[k][j] /= LU[k][k];
          }
-         for (int i = 0; i < k; i++) {
-            for (int j = 0; j < nx; j++) {
+         for (@Immutable int i = 0; i < k; i++) {
+            for (@Immutable int j = 0; j < nx; j++) {
                X[i][j] -= X[k][j]*LU[i][k];
             }
          }
       }
       return Xmat;
    }
-  private static final long serialVersionUID = 1;
+  private static final @Immutable long serialVersionUID = 1;
 }
